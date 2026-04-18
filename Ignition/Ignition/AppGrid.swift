@@ -20,7 +20,9 @@ struct AppGrid: View {
             LazyVGrid(columns: columns, spacing: 0) {
                 ForEach(viewModel.Apps, id: \.self) { app in
                     Button(action: {
+                        NSApplication.shared.hide(nil)
                         NSWorkspace.shared.open(app)
+                        
                     }) {
                         VStack(){
                             Image(nsImage: NSWorkspace.shared.icon(forFile: app.path)).resizable().frame(width: 64, height: 64)
