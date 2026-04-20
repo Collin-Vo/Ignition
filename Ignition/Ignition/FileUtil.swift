@@ -23,10 +23,11 @@ class FileUtil {
         openPanel.canChooseFiles = false
     }
     
-    func getApplications(in directories: [URL]) -> [URL] {
+    func getApplications(in directories: [URL]) -> [AppIdentity] {
         
         let fileManager = FileManager.default
         var appURLs: [URL] = []
+        var apps: [AppIdentity] = []
         
         // Define the keys we want to fetch to make the search faster
         let keys: [URLResourceKey] = [.isApplicationKey, .localizedNameKey]
@@ -60,6 +61,10 @@ class FileUtil {
         
         appURLs.sort(by: { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending })
         
-        return appURLs
+        for url in appURLs {
+            apps.append(AppIdentity(url: url))
+        }
+        
+        return apps
     }
 }

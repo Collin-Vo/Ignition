@@ -7,35 +7,108 @@
 
 import SwiftUI
 
+
 struct AppGrid: View {
     
-    @State private var viewModel: AppGridViewModel = .init(Apps: [])
+    @Bindable private var viewModel: AppGridViewModel = .init()
+    
+    @FocusState private var isSearchFocused: Bool
+    
     let columns = [
         GridItem(.adaptive(minimum: 110, maximum: 110), spacing: 10)
     ]
+
+    private var ghostTextSuffix: String {
+        guard !viewModel.searchTerm.isEmpty,
+                let firstMatch = viewModel.filteredApps.first?.name else {
+            return ""
+        }
+        
+        // Check if the result starts with search term (case-insensitive)
+        if firstMatch.lowercased().hasPrefix(viewModel.searchTerm.lowercased()) {
+            // Drop the number of characters the user has already typed
+            return String(firstMatch.dropFirst(viewModel.searchTerm.count))
+        }
+        
+        return ""
+    }
     
     
     var body: some View {
-        ScrollView(){
-            LazyVGrid(columns: columns, spacing: 0) {
-                ForEach(viewModel.Apps, id: \.self) { app in
-                    Button(action: {
-                        NSApplication.shared.hide(nil)
-                        NSWorkspace.shared.open(app)
+        
+        VStack{
+            
+            HStack(alignment: .lastTextBaseline){
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                ZStack(alignment: .leading){
+                    // Ghost Layer
+                    HStack(spacing: 0) {
+                        // 1. Invisible spacer that exactly matches the user's typed width
+                        Text(viewModel.searchTerm)
+                            .font(.largeTitle.leading(.tight))
+                            .opacity(0)
                         
-                    }) {
-                        VStack(){
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: app.path)).resizable().frame(width: 64, height: 64)
-                            Text(app.lastPathComponent.dropLast(4)).multilineTextAlignment(.center)
-                            Spacer()
-                        }.frame(width: 110, height: 110)
-                        //                        .onTapGesture {
-                        //                            NSWorkspace.shared.open(app)
-                        //                        }
-                    }.buttonStyle(AppLauncherButtonStyle())
+                        // 2. The visible suggestion suffix
+                        Text(ghostTextSuffix)
+                            .font(.largeTitle.leading(.tight))
+                            .foregroundColor(.secondary.opacity(0.3))
+                    }
+                    .lineLimit(1)
+                    .allowsHitTesting(false)
+                    TextField("Search", text: $viewModel.searchTerm)
+                        .focused($isSearchFocused)
+                        .disableAutocorrection(true)
+                        .textFieldStyle(.plain)
+                        .onSubmit {
+                            if let app = viewModel.filteredApps.first {
+                                NSApplication.shared.hide(nil)
+                                NSWorkspace.shared.open(app.url)
+                            }
+                        }
                 }
+                
+                
+            if !viewModel.searchTerm.isEmpty {
+                Image(nsImage: viewModel.filteredApps.first?.icon ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8)
+            }    else {
+                Image(nsImage: viewModel.filteredApps.first?.icon ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8).hidden()
             }
-        }.padding(.horizontal)
+            }.clipped().font(.largeTitle.leading(.tight))
+                .padding([.horizontal, .top])
+                .padding(.bottom, -25)
+                .ignoresSafeArea()
+                .lineLimit(1)
+            Divider().padding(.horizontal)
+            ScrollView(){
+                LazyVGrid(columns: columns, spacing: 0) {
+                    ForEach(viewModel.filteredApps) { app in
+                        AppButton(app: app)
+                            .focusable()
+                            .onKeyPress(.return) {
+                                NSApplication.shared.hide(nil)
+                                NSWorkspace.shared.open(app.url)
+                                return .handled
+                            }
+                    }
+                }.padding(.horizontal)
+            }
+            
+            
+        }.onAppear {
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isSearchFocused = true
+            }
+            
+            NotificationCenter.default.addObserver(
+                forName: NSApplication.didBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                viewModel.searchTerm = ""
+            }
+            
+        }
     }
 }
 
@@ -48,16 +121,57 @@ struct AppLauncherButtonStyle: ButtonStyle {
     }
 }
 
+struct AppButton: View {
+    let app: AppIdentity
+    
+    var body: some View {
+        Button(action: {
+            NSApplication.shared.hide(nil)
+            NSWorkspace.shared.open(app.url)
+            
+        }) {
+            VStack(){
+                Image(nsImage: app.icon).resizable().frame(width: 64, height: 64)
+                Text(app.name).multilineTextAlignment(.center)
+                Spacer()
+            }
+        }.buttonStyle(AppLauncherButtonStyle())
+    }
+}
+
 @Observable
 class AppGridViewModel {
     let AppLocations = [
         URL(fileURLWithPath: "/Applications"),
         URL(fileURLWithPath: "/System/Applications"),
-        URL(fileURLWithPath: "Applications", relativeTo: .userDirectory)
+        URL(fileURLWithPath: "Applications", relativeTo: .userDirectory),
+        URL(fileURLWithPath: "/System/Volumes/Preboot/Cryptexes/App/System/Applications/")
     ]
-    var Apps: [URL]
+    var apps: [AppIdentity] = []
+    var searchTerm: String = ""
+    var focusedApp: URL?
     
-    init(Apps: [URL]) {
+    var filteredApps: [AppIdentity] {
+        if searchTerm.isEmpty { return apps }
+        
+        let term = searchTerm.lowercased()
+        
+        // Bucket 1: Starts with the search term
+        let startsWith = apps.filter {
+            $0.name.lowercased().hasPrefix(term)
+        }
+        
+        // Bucket 2: Contains the search term but DOES NOT start with it
+        let contains = apps.filter {
+            $0.name.lowercased().contains(term) &&
+            !$0.name.lowercased().hasPrefix(term)
+        }
+        
+        // Combine them: StartsWith gets priority at the top
+        return startsWith + contains
+    }
+    
+    init() {
         
         debugPrint(AppLocations)
         
@@ -65,7 +179,7 @@ class AppGridViewModel {
         
         
         
-        self.Apps = fu.getApplications(in: AppLocations)
+        self.apps = fu.getApplications(in: AppLocations)
     }
     
     
