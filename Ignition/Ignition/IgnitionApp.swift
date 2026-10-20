@@ -56,8 +56,8 @@ struct IgnitionApp: App {
         Settings{
             SettingsView()
                 .environment(settingsManager)
-                .frame(width: 450, height: 300)
-        }
+                .frame(width: 500, height: 420)
+        }.windowLevel(.floating) // Matches the grid window, which would otherwise always cover it
         
     }
     

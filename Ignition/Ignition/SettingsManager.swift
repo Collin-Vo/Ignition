@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import ServiceManagement
 
 @Observable
 class SettingsManager {
@@ -32,5 +33,26 @@ class SettingsManager {
 
     func unhide(paths: Set<String>) {
         hiddenApps.removeAll { paths.contains($0) }
+    }
+
+    /// Mirrors the login item status. The system owns this state, since the user can also
+    /// change it in System Settings, so it is read from SMAppService rather than UserDefaults
+    private(set) var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            print("Failed to \(enabled ? "register" : "unregister") login item: \(error)")
+        }
+        refreshLaunchAtLogin()
+    }
+
+    func refreshLaunchAtLogin() {
+        launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 }
