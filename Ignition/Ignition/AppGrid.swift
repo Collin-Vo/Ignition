@@ -142,6 +142,7 @@ struct AppGrid: View {
             viewModel.hiddenApps = settingsManager.hiddenApps
 
             viewModel.apps = viewModel.loadApps(hiddenApps: settingsManager.hiddenApps)
+            viewModel.startWatchingFolders()
             
             Task {
                 await viewModel.requestMissingFolderAccess()

@@ -24,6 +24,14 @@ class AppGridViewModel {
     
     var hiddenApps: [String]
     
+    /// Folders where apps get installed or removed. The system folders only change with
+    /// macOS updates, so they aren't worth watching.
+    private var watchedLocations: [URL] {
+        appLocations.filter { !$0.path.hasPrefix("/System/") }
+    }
+    
+    @ObservationIgnored private var folderWatcher: AppFolderWatcher?
+    
     init(hiddenApps: [String]) {
         
         // Apps are loaded in AppGrid's onAppear: SwiftUI re-runs this initializer on every
@@ -74,6 +82,20 @@ class AppGridViewModel {
         }
     }
     
+    /// Reloads the apps whenever something changes in the watched app folders
+    func startWatchingFolders() {
+        if folderWatcher == nil {
+            folderWatcher = AppFolderWatcher { [weak self] in
+                guard let self else { return }
+                apps = loadApps(hiddenApps: hiddenApps)
+            }
+        }
+        
+        // Watch the URLs we can actually read (granted folders resolve to their bookmark URL)
+        let fu = FileUtil()
+        folderWatcher?.watch(watchedLocations.compactMap { fu.accessibleURL(for: $0) })
+    }
+    
     /// Asks for access to folders the sandbox blocks, reloading the apps after each one is granted
     func requestMissingFolderAccess() async {
         let fu = FileUtil()
@@ -81,6 +103,7 @@ class AppGridViewModel {
         for folder in fu.foldersNeedingAccess(in: appLocations) {
             guard await fu.requestFolderAccess(to: folder) != nil else { continue }
             apps = loadApps(hiddenApps: hiddenApps)
+            startWatchingFolders()
         }
     }
 }
