@@ -30,7 +30,7 @@ struct IgnitionApp: App {
                 .gesture(
                     WindowDragGesture() // This allows the user to drag the window by its background
                 )
-                .containerBackground(.thinMaterial, for: .window)
+                .containerBackground(.ultraThinMaterial, for: .window)
                 .windowFullScreenBehavior(.disabled)
                 .windowMinimizeBehavior(.disabled)
                 .windowDismissBehavior(.disabled)

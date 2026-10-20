@@ -112,16 +112,16 @@ struct AppGrid: View {
                                 NSWorkspace.shared.open(app.url)
                                 return .handled
                             }
-                            .contextMenu {
+                            .contextMenu{
                                 Button {
                                     NSWorkspace.shared.activateFileViewerSelecting([app.url]);
                                 } label: {
-                                    Label("Open in Finder", systemImage: "folder")
+                                    Label("Open in Finder", systemImage: "finder").labelStyle(.titleAndIcon)
                                 }
                                 Button {
                                     settingsManager.hide(app: app)
                                 } label: {
-                                    Label("Hide App", systemImage: "eye.slash")
+                                    Label("Hide App", systemImage: "eye.slash").labelStyle(.titleAndIcon)
                                 }
                             }
                     }
