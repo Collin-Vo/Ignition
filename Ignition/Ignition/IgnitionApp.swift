@@ -30,7 +30,14 @@ struct IgnitionApp: App {
                 .gesture(
                     WindowDragGesture() // This allows the user to drag the window by its background
                 )
-                .containerBackground(.ultraThinMaterial, for: .window)
+                .background {
+                    // Liquid Glass fills the window, following its rounded corners
+                    ConcentricRectangle()
+                        .fill(.clear)
+                        .glassEffect(.regular, in: ConcentricRectangle())
+                        .ignoresSafeArea()
+                }
+                .containerBackground(.clear, for: .window)
                 .windowFullScreenBehavior(.disabled)
                 .windowMinimizeBehavior(.disabled)
                 .windowDismissBehavior(.disabled)
