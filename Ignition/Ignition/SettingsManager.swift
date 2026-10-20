@@ -16,16 +16,21 @@ class SettingsManager {
         URL(fileURLWithPath: "/System/Volumes/Preboot/Cryptexes/App/System/Applications"),
         URL(fileURLWithPath: "/System/Library/CoreServices/Applications")
     ]
-    
-    var hiddenApps: [String] = [] {
+
+    /// Paths of the apps hidden from the grid, persisted in UserDefaults
+    var hiddenApps: [String] = UserDefaults.standard.stringArray(forKey: "hiddenApps") ?? [] {
         didSet {
             UserDefaults.standard.set(hiddenApps, forKey: "hiddenApps")
         }
     }
 
-    
+
     func hide(app: AppIdentity) {
-        hiddenApps.append(app.url.relativePath)
-        UserDefaults.standard.set(hiddenApps, forKey: "hiddenApps")
+        guard !hiddenApps.contains(app.url.path) else { return }
+        hiddenApps.append(app.url.path)
+    }
+
+    func unhide(paths: Set<String>) {
+        hiddenApps.removeAll { paths.contains($0) }
     }
 }

@@ -119,7 +119,7 @@ struct AppGrid: View {
                                     Label("Open in Finder", systemImage: "folder")
                                 }
                                 Button {
-                                    viewModel.hiddenApps = viewModel.hiddenApps + [app.url.relativePath]
+                                    settingsManager.hide(app: app)
                                 } label: {
                                     Label("Hide App", systemImage: "eye.slash")
                                 }
@@ -161,8 +161,12 @@ struct AppGrid: View {
             
         }
         .onChange(of: settingsManager.hiddenApps) { _, newHiddenApps in
-            viewModel.hiddenApps = newHiddenApps
-            viewModel.apps = viewModel.loadApps(hiddenApps: newHiddenApps)
+            viewModel.updateHiddenApps(newHiddenApps)
+
+            // The hidden app may have had focus, which would otherwise be lost
+            if case .app(let url) = focus, newHiddenApps.contains(url.path) {
+                focus = .search
+            }
         }
     }
     

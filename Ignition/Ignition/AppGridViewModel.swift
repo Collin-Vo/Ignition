@@ -56,9 +56,22 @@ class AppGridViewModel {
     func loadApps(hiddenApps: [String]) -> [AppIdentity]  {
         let fu = FileUtil()
 
-        apps = fu.getApplications(in: appLocations).filter{!hiddenApps.contains($0.url.relativePath)}
+        apps = fu.getApplications(in: appLocations).filter{!hiddenApps.contains($0.url.path)}
 
         return apps
+    }
+
+    /// Applies a changed hidden list. Hiding only filters the loaded apps;
+    /// unhiding needs a rescan because those apps were never kept in memory.
+    func updateHiddenApps(_ newHiddenApps: [String]) {
+        let unhidAny = hiddenApps.contains { !newHiddenApps.contains($0) }
+        hiddenApps = newHiddenApps
+
+        if unhidAny {
+            apps = loadApps(hiddenApps: newHiddenApps)
+        } else {
+            apps.removeAll { newHiddenApps.contains($0.url.path) }
+        }
     }
     
     /// Asks for access to folders the sandbox blocks, reloading the apps after each one is granted
@@ -70,12 +83,4 @@ class AppGridViewModel {
             apps = loadApps(hiddenApps: hiddenApps)
         }
     }
-    
-
-    
-    func hideApp(name: AppIdentity) {
-        hiddenApps.append(name.url.relativePath)
-    }
-    
-    
 }

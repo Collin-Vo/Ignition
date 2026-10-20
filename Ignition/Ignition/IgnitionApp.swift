@@ -54,7 +54,9 @@ struct IgnitionApp: App {
             .windowStyle(.hiddenTitleBar)
         
         Settings{
-            SettingsView().frame(width: 450, height: 300)
+            SettingsView()
+                .environment(settingsManager)
+                .frame(width: 450, height: 300)
         }
         
     }
