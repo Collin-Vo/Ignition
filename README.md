@@ -76,7 +76,7 @@ One-time setup:
 2. Store notarization credentials in the keychain, using an app-specific password from appleid.apple.com:
 
    ```bash
-   xcrun notarytool store-credentials ignition-notary --apple-id <you@example.com> --team-id JM7U494D23
+   xcrun notarytool store-credentials ignition-notary --apple-id <you@example.com> --team-id <Team ID>
    ```
 
 Then run:
