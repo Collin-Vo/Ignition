@@ -10,6 +10,8 @@ import SwiftUI
 @main
 struct IgnitionApp: App {
     
+    @State private var settingsManager = SettingsManager()
+    
     init() {
         NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
@@ -21,12 +23,14 @@ struct IgnitionApp: App {
     }
     
     var body: some Scene {
+        
         WindowGroup {
             ContentView()
+                .environment(settingsManager)
                 .gesture(
                     WindowDragGesture() // This allows the user to drag the window by its background
                 )
-                .containerBackground(.regularMaterial, for: .window)
+                .containerBackground(.thinMaterial, for: .window)
                 .windowFullScreenBehavior(.disabled)
                 .windowMinimizeBehavior(.disabled)
                 .windowDismissBehavior(.disabled)
@@ -49,6 +53,9 @@ struct IgnitionApp: App {
         }.windowLevel(.floating)
             .windowStyle(.hiddenTitleBar)
         
+        Settings{
+            SettingsView().frame(width: 450, height: 300)
+        }
         
     }
     

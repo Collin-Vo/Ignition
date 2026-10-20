@@ -1,5 +1,7 @@
 {
-  "fill" : "system-light",
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.38039,0.33333,0.96078,1.00000"
+  },
   "groups" : [
     {
       "layers" : [
@@ -7,13 +9,13 @@
           "fill-specializations" : [
             {
               "value" : {
-                "automatic-gradient" : "display-p3:0.30492,0.79283,0.46225,1.00000"
+                "automatic-gradient" : "extended-gray:1.00000,1.00000"
               }
             },
             {
               "appearance" : "dark",
               "value" : {
-                "automatic-gradient" : "display-p3:0.47036,0.94812,0.61125,1.00000"
+                "automatic-gradient" : "extended-srgb:0.38039,0.33333,0.96078,1.00000"
               }
             }
           ],

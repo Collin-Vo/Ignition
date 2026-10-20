@@ -10,9 +10,10 @@ import SwiftUI
 
 struct AppGrid: View {
     
-    @Bindable private var viewModel: AppGridViewModel = .init()
-    
     @FocusState private var isSearchFocused: Bool
+    @Environment(SettingsManager.self) private var settingsManager
+    @State private var viewModel: AppGridViewModel = .init(hiddenApps: [])
+    
     
     let columns = [
         GridItem(.adaptive(minimum: 110, maximum: 110), spacing: 10)
@@ -69,9 +70,9 @@ struct AppGrid: View {
                 
                 
             if !viewModel.searchTerm.isEmpty {
-                Image(nsImage: viewModel.filteredApps.first?.icon ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8)
+                Image(nsImage: viewModel.filteredApps.first?.icon35 ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8)
             }    else {
-                Image(nsImage: viewModel.filteredApps.first?.icon ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8).hidden()
+                Image(nsImage: viewModel.filteredApps.first?.icon35 ?? NSImage()).resizable().frame(width: 35, height: 35).padding(.bottom, -8).hidden()
             }
             }.clipped().font(.largeTitle.leading(.tight))
                 .padding([.horizontal, .top])
@@ -89,6 +90,18 @@ struct AppGrid: View {
                                 NSWorkspace.shared.open(app.url)
                                 return .handled
                             }
+                            .contextMenu {
+                                Button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([app.url]);
+                                } label: {
+                                    Label("Open in Finder", systemImage: "folder")
+                                }
+                                Button {
+                                    viewModel.hiddenApps = viewModel.hiddenApps + [app.url.relativePath]
+                                } label: {
+                                    Label("Hide App", systemImage: "eye.slash")
+                                }
+                            }
                     }
                 }.padding(.horizontal)
             }
@@ -96,6 +109,14 @@ struct AppGrid: View {
             
         }.onAppear {
             
+            viewModel.hiddenApps = settingsManager.hiddenApps
+
+            viewModel.apps = viewModel.loadApps(hiddenApps: settingsManager.hiddenApps)
+            
+            Task {
+                await viewModel.requestMissingFolderAccess()
+            }
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isSearchFocused = true
             }
@@ -108,6 +129,10 @@ struct AppGrid: View {
                 viewModel.searchTerm = ""
             }
             
+        }
+        .onChange(of: settingsManager.hiddenApps) { _, newHiddenApps in
+            viewModel.hiddenApps = newHiddenApps
+            viewModel.apps = viewModel.loadApps(hiddenApps: newHiddenApps)
         }
     }
 }
@@ -131,7 +156,7 @@ struct AppButton: View {
             
         }) {
             VStack(){
-                Image(nsImage: app.icon).resizable().frame(width: 64, height: 64)
+                Image(nsImage: app.icon64).resizable().frame(width: 64, height: 64)
                 Text(app.name).multilineTextAlignment(.center)
                 Spacer()
             }
@@ -139,51 +164,7 @@ struct AppButton: View {
     }
 }
 
-@Observable
-class AppGridViewModel {
-    let AppLocations = [
-        URL(fileURLWithPath: "/Applications"),
-        URL(fileURLWithPath: "/System/Applications"),
-        URL(fileURLWithPath: "Applications", relativeTo: .userDirectory),
-        URL(fileURLWithPath: "/System/Volumes/Preboot/Cryptexes/App/System/Applications/")
-    ]
-    var apps: [AppIdentity] = []
-    var searchTerm: String = ""
-    var focusedApp: URL?
-    
-    var filteredApps: [AppIdentity] {
-        if searchTerm.isEmpty { return apps }
-        
-        let term = searchTerm.lowercased()
-        
-        // Bucket 1: Starts with the search term
-        let startsWith = apps.filter {
-            $0.name.lowercased().hasPrefix(term)
-        }
-        
-        // Bucket 2: Contains the search term but DOES NOT start with it
-        let contains = apps.filter {
-            $0.name.lowercased().contains(term) &&
-            !$0.name.lowercased().hasPrefix(term)
-        }
-        
-        // Combine them: StartsWith gets priority at the top
-        return startsWith + contains
-    }
-    
-    init() {
-        
-        debugPrint(AppLocations)
-        
-        let fu = FileUtil()
-        
-        
-        
-        self.apps = fu.getApplications(in: AppLocations)
-    }
-    
-    
-}
+
 
 #Preview {
     AppGrid().frame(width: 700, height: 500)
