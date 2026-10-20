@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// The Settings window, with one tab per settings pane
 struct SettingsView: View {
 
     var body: some View {

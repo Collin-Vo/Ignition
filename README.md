@@ -99,10 +99,10 @@ Output is written to `.build/release/`: the `.app`, `Ignition-<version>.zip`, `I
 | `IgnitionApp.swift`              | App entry point, window setup, auto-hide, Settings scene     |
 | `AppGrid.swift`                  | Search field, ghost-text autocomplete, grid, keyboard navigation, context menu |
 | `AppGridViewModel.swift`         | App locations, search ranking, hidden-app filtering, folder access requests |
+| `AppFolderWatcher.swift`         | FSEvents watcher that reloads the grid when apps are installed or removed |
 | `AppIdentity.swift`              | App model: name, URL and pre-rendered icons                  |
 | `FileUtil.swift`                 | App discovery, sandbox access checks, security-scoped bookmarks |
 | `SettingsManager.swift`          | Hidden apps list and launch-at-login state                   |
 | `SettingsView.swift`             | Tabbed Settings window                                       |
 | `GeneralSettingsView.swift`      | Launch-at-login toggle and the Hidden Apps table             |
 | `NSImageBakeExtension.swift`     | Pre-renders `NSImage` icons at fixed sizes                   |
-| `AppStorageExtensions.swift`     | `RawRepresentable` conformance for storing Codable arrays    |

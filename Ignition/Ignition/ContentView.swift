@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Root view of the main window
 struct ContentView: View {
     var body: some View {
         AppGrid()
@@ -15,4 +16,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(SettingsManager())
 }
