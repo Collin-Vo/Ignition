@@ -8,6 +8,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// The General settings tab: launch at login and the hidden apps
 struct GeneralSettingsView: View {
 
     @Environment(SettingsManager.self) private var settingsManager
@@ -37,6 +38,7 @@ struct GeneralSettingsView: View {
     }
 }
 
+/// Table of the hidden apps, with +/− buttons below it to hide more apps or unhide the selected ones
 struct HiddenAppsList: View {
 
     @Environment(SettingsManager.self) private var settingsManager
@@ -46,9 +48,9 @@ struct HiddenAppsList: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Table(hiddenAppsIdentities, selection: $selectedHiddenApps){
-                TableColumn("App"){ app in
-                    HStack{
+            Table(hiddenAppsIdentities, selection: $selectedHiddenApps) {
+                TableColumn("App") { app in
+                    HStack {
                         Image(nsImage: app.icon20).resizable().frame(width: 20, height: 20)
                         Text(app.name)
                     }
@@ -56,29 +58,31 @@ struct HiddenAppsList: View {
                 TableColumn("Path", value: \.url.path)
             }
             .frame(minHeight: 160)
-            HStack{
-                Image(systemName: "plus").onTapGesture {
+            // Bottom bar in the style of macOS list editing controls
+            HStack {
+                Button {
                     isChoosingAppsToHide = true
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .accessibilityLabel("Hide Apps…")
                 Divider()
-                Image(systemName: "minus").onTapGesture {
-                    let paths = hiddenAppsIdentities
-                        .filter { selectedHiddenApps.contains($0.id) }
-                        .map(\.url.path)
-                    selectedHiddenApps.removeAll()
-                    settingsManager.unhide(paths: Set(paths))
+                Button(action: unhideSelectedApps) {
+                    Image(systemName: "minus")
                 }
+                .accessibilityLabel("Unhide Selected Apps")
+                .disabled(selectedHiddenApps.isEmpty)
                 Spacer()
-            }.frame(height: 20)
+            }
+            .buttonStyle(.plain)
+            .frame(height: 20)
             .foregroundStyle(.secondary)
             .font(.system(size: 11))
             .fontWeight(.semibold)
             .padding(.leading, 7)
             .padding(.vertical, 2)
-            .background{
-
+            .background {
                 Rectangle().fill(.quinary).stroke(.separator, style: .init(lineWidth: 1))
-
             }
         }
         // Presented as a sheet on the settings window, so it can't open behind it
@@ -96,6 +100,13 @@ struct HiddenAppsList: View {
         .onChange(of: settingsManager.hiddenApps) { _, newHiddenApps in
             loadIdentities(newHiddenApps)
         }
+    }
+
+    private func unhideSelectedApps() {
+        // Selection IDs are the apps' URLs
+        let paths = Set(selectedHiddenApps.map(\.path))
+        selectedHiddenApps.removeAll()
+        settingsManager.unhide(paths: paths)
     }
 
     /// Baking icons is expensive, so identities are only rebuilt when the hidden list changes

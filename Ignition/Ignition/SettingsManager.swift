@@ -1,5 +1,5 @@
 //
-//  AppListManager.swift
+//  SettingsManager.swift
 //  Ignition
 //
 //  Created by Collin Voßwinkel on 10.06.26.
@@ -8,23 +8,18 @@
 import Foundation
 import ServiceManagement
 
+/// App-wide settings, shared through the environment by the grid and the Settings window
 @Observable
 class SettingsManager {
-    let AppLocations = [
-        URL(fileURLWithPath: "/Applications"),
-        URL(fileURLWithPath: "/System/Applications"),
-        URL(fileURLWithPath: "Applications", relativeTo: .userDirectory),
-        URL(fileURLWithPath: "/System/Volumes/Preboot/Cryptexes/App/System/Applications"),
-        URL(fileURLWithPath: "/System/Library/CoreServices/Applications")
-    ]
+
+    private static let hiddenAppsKey = "hiddenApps"
 
     /// Paths of the apps hidden from the grid, persisted in UserDefaults
-    var hiddenApps: [String] = UserDefaults.standard.stringArray(forKey: "hiddenApps") ?? [] {
+    var hiddenApps: [String] = UserDefaults.standard.stringArray(forKey: hiddenAppsKey) ?? [] {
         didSet {
-            UserDefaults.standard.set(hiddenApps, forKey: "hiddenApps")
+            UserDefaults.standard.set(hiddenApps, forKey: Self.hiddenAppsKey)
         }
     }
-
 
     func hide(app: AppIdentity) {
         guard !hiddenApps.contains(app.url.path) else { return }
@@ -49,6 +44,7 @@ class SettingsManager {
         } catch {
             print("Failed to \(enabled ? "register" : "unregister") login item: \(error)")
         }
+        // Read the real status back, so a failed (un)registration flips the toggle back
         refreshLaunchAtLogin()
     }
 

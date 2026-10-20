@@ -9,10 +9,12 @@ import SwiftUI
 
 @main
 struct IgnitionApp: App {
-    
+
     @State private var settingsManager = SettingsManager()
-    
+
     init() {
+        // Ignition is a launcher: once the user switches to another app, get out of the way.
+        // The app's lifetime is the process's, so the observer is never removed.
         NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
             object: nil,
@@ -21,15 +23,13 @@ struct IgnitionApp: App {
             NSApplication.shared.hide(nil)
         }
     }
-    
+
     var body: some Scene {
-        
         WindowGroup {
             ContentView()
                 .environment(settingsManager)
-                .gesture(
-                    WindowDragGesture() // This allows the user to drag the window by its background
-                )
+                // Without a title bar, dragging the background is the only way to move the window
+                .gesture(WindowDragGesture())
                 .background {
                     // Liquid Glass fills the window, following its rounded corners
                     ConcentricRectangle()
@@ -41,43 +41,29 @@ struct IgnitionApp: App {
                 .windowFullScreenBehavior(.disabled)
                 .windowMinimizeBehavior(.disabled)
                 .windowDismissBehavior(.disabled)
-                .frame(minWidth: 400, minHeight: 300) // Ensure the window is resizable
-                .onAppear {
-                    if let window = NSApplication.shared.windows.first {
-                        // 1. Hide the buttons visually
-                        window.standardWindowButton(.closeButton)?.isHidden = true
-                        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-                        window.standardWindowButton(.zoomButton)?.isHidden = true
-                        
-                        // 2. Make the titlebar transparent so content flows to the top
-                        window.titlebarAppearsTransparent = true
-                        window.titleVisibility = .hidden
-                        
-                        // 3. Ensure it's still resizable
-                        window.styleMask.insert(.resizable)
-                    }
-                }
-        }.windowLevel(.floating)
-            .windowStyle(.hiddenTitleBar)
-        
-        Settings{
+                .frame(minWidth: 400, minHeight: 300)
+                .onAppear(perform: configureMainWindow)
+        }
+        .windowLevel(.floating)
+        .windowStyle(.hiddenTitleBar)
+
+        Settings {
             SettingsView()
                 .environment(settingsManager)
                 .frame(width: 500, height: 420)
-        }.windowLevel(.floating) // Matches the grid window, which would otherwise always cover it
-        
+        }
+        .windowLevel(.floating) // Matches the grid window, which would otherwise always cover it
     }
-    
-    
-}
 
-
-
-#Preview {
-    ContentView()
-        .containerBackground(.regularMaterial, for: .window)
-        .windowFullScreenBehavior(.disabled)
-        .windowMinimizeBehavior(.disabled)
-        .windowDismissBehavior(.disabled)
-        .windowResizeBehavior(.disabled)
+    /// Strips the window down to just its content: no traffic lights and a transparent
+    /// title bar, so the content flows to the top while the window stays resizable
+    private func configureMainWindow() {
+        guard let window = NSApplication.shared.windows.first else { return }
+        window.standardWindowButton(.closeButton)?.isHidden = true
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.styleMask.insert(.resizable)
+    }
 }

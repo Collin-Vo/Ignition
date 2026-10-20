@@ -8,43 +8,45 @@
 import Foundation
 import AppKit
 
+/// Discovers installed apps and manages sandbox access to the folders they live in.
+/// Access granted through an open panel is saved as a security-scoped bookmark,
+/// so the user only has to grant each folder once.
 class FileUtil {
-    func hasAccess(to folderURL: URL) -> Bool {
-        let fileManager = FileManager.default
-        
-        // Check if the path exists AND if it is readable by this process
-        return fileManager.isReadableFile(atPath: folderURL.path)
-    }
-    
+
     private static let bookmarksKey = "folderBookmarks"
-    
+
     /// Paths we already called startAccessingSecurityScopedResource on, so we only do it once per launch
     private static var accessedPaths: Set<String> = []
-    
+
     /// Saved bookmarks, keyed by the path of the folder we asked access for
     private var bookmarks: [String: Data] {
         get { UserDefaults.standard.dictionary(forKey: Self.bookmarksKey) as? [String: Data] ?? [:] }
         set { UserDefaults.standard.set(newValue, forKey: Self.bookmarksKey) }
     }
-    
+
+    /// Whether the folder exists and this (sandboxed) process may read it
+    func hasAccess(to folderURL: URL) -> Bool {
+        FileManager.default.isReadableFile(atPath: folderURL.path)
+    }
+
     private func startAccessing(_ url: URL) {
         guard !Self.accessedPaths.contains(url.path) else { return }
         if url.startAccessingSecurityScopedResource() {
             Self.accessedPaths.insert(url.path)
         }
     }
-    
+
     private func saveBookmark(for grantedURL: URL, requestedFolder folderURL: URL) {
         guard let data = try? grantedURL.bookmarkData(options: .withSecurityScope,
                                                       includingResourceValuesForKeys: nil,
                                                       relativeTo: nil) else { return }
         bookmarks[folderURL.path] = data
     }
-    
+
     /// Restores access granted in an earlier launch. Returns nil if there is no usable bookmark.
     func restoreFolderAccess(to folderURL: URL) -> URL? {
         guard let data = bookmarks[folderURL.path] else { return nil }
-        
+
         var isStale = false
         guard let url = try? URL(resolvingBookmarkData: data,
                                  options: .withSecurityScope,
@@ -53,19 +55,19 @@ class FileUtil {
             bookmarks[folderURL.path] = nil
             return nil
         }
-        
+
         startAccessing(url)
         guard hasAccess(to: url) else {
             bookmarks[folderURL.path] = nil
             return nil
         }
-        
+
         if isStale {
             saveBookmark(for: url, requestedFolder: folderURL)
         }
         return url
     }
-    
+
     /// Returns a readable URL for the folder (restoring a saved bookmark if needed),
     /// or nil if it doesn't exist or the user still has to grant access
     func accessibleURL(for folderURL: URL) -> URL? {
@@ -73,14 +75,14 @@ class FileUtil {
         if hasAccess(to: folderURL) { return folderURL }
         return restoreFolderAccess(to: folderURL)
     }
-    
+
     /// Folders that exist on this Mac but that the sandbox won't let us read yet
     func foldersNeedingAccess(in directories: [URL]) -> [URL] {
         directories.filter {
             FileManager.default.fileExists(atPath: $0.path) && accessibleURL(for: $0) == nil
         }
     }
-    
+
     /// Asks the user to grant access to a folder the sandbox blocks and remembers the choice.
     /// Returns the folder the user picked (with access started), or nil if they cancelled.
     func requestFolderAccess(to folderURL: URL) async -> URL? {
@@ -91,9 +93,9 @@ class FileUtil {
         openPanel.canChooseDirectories = true
         openPanel.canChooseFiles = false
         openPanel.allowsMultipleSelection = false
-        
+
         NSApp.activate()
-        
+
         // Show the panel as a sheet on our window: the main window is .floating, and a
         // standalone panel ends up behind it, while a sheet always stays attached on top
         let response: NSApplication.ModalResponse
@@ -104,55 +106,37 @@ class FileUtil {
         } else {
             response = openPanel.runModal()
         }
-        
+
         guard response == .OK, let url = openPanel.url else {
             return nil
         }
-        
+
         startAccessing(url)
         saveBookmark(for: url, requestedFolder: folderURL)
         return url
     }
-    
+
+    /// Finds the apps directly in the given folders (not inside other app bundles), sorted by name
     func getApplications(in directories: [URL]) -> [AppIdentity] {
-        
-        let fileManager = FileManager.default
-        var appURLs: [URL] = []
-        var apps: [AppIdentity] = []
-        
-        // Define the keys we want to fetch to make the search faster
-        let keys: [URLResourceKey] = [.isApplicationKey, .localizedNameKey]
-        
-        // Filter options:
-        // 1. Skips hidden files like .DS_Store
-        // 2. Skips package contents (don't look INSIDE the .app bundle)
+        // Skip hidden files like .DS_Store, and don't descend into bundles,
+        // so apps nested in other apps' Contents folders aren't listed
         let options: FileManager.DirectoryEnumerationOptions = [.skipsHiddenFiles, .skipsPackageDescendants]
-        
+        var appURLs: [URL] = []
+
         for folder in directories {
             // Skips folders that don't exist or that the user hasn't granted access to yet
-            guard let directory = accessibleURL(for: folder) else { continue }
-            
-            guard let enumerator = fileManager.enumerator(at: directory,
-                                                          includingPropertiesForKeys: keys,
-                                                          options: options) else {
-                continue
-            }
-            
-            
-            for case let fileURL as URL in enumerator {
-                // Check if the file is actually an application
-                if fileURL.pathExtension == "app" {
-                    appURLs.append(fileURL)
-                }
+            guard let directory = accessibleURL(for: folder),
+                  let enumerator = FileManager.default.enumerator(at: directory,
+                                                                  includingPropertiesForKeys: nil,
+                                                                  options: options) else { continue }
+
+            for case let fileURL as URL in enumerator where fileURL.pathExtension == "app" {
+                appURLs.append(fileURL)
             }
         }
-        
-        appURLs.sort(by: { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending })
-        
-        for url in appURLs {
-            apps.append(AppIdentity(url: url))
-        }
-        
-        return apps
+
+        return appURLs
+            .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
+            .map { AppIdentity(url: $0) }
     }
 }
