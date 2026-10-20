@@ -42,6 +42,7 @@ struct HiddenAppsList: View {
     @Environment(SettingsManager.self) private var settingsManager
     @State private var selectedHiddenApps = Set<AppIdentity.ID>()
     @State private var hiddenAppsIdentities: [AppIdentity] = []
+    @State private var isChoosingAppsToHide = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,7 +58,7 @@ struct HiddenAppsList: View {
             .frame(minHeight: 160)
             HStack{
                 Image(systemName: "plus").onTapGesture {
-                    chooseAppsToHide()
+                    isChoosingAppsToHide = true
                 }
                 Divider()
                 Image(systemName: "minus").onTapGesture {
@@ -80,6 +81,15 @@ struct HiddenAppsList: View {
 
             }
         }
+        // Presented as a sheet on the settings window, so it can't open behind it
+        .fileImporter(isPresented: $isChoosingAppsToHide, allowedContentTypes: [.application], allowsMultipleSelection: true) { result in
+            guard case .success(let urls) = result else { return }
+            for url in urls {
+                settingsManager.hide(app: AppIdentity(url: url))
+            }
+        }
+        .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Applications"))
+        .fileDialogConfirmationLabel("Hide")
         .onAppear {
             loadIdentities(settingsManager.hiddenApps)
         }
@@ -91,19 +101,6 @@ struct HiddenAppsList: View {
     /// Baking icons is expensive, so identities are only rebuilt when the hidden list changes
     private func loadIdentities(_ hiddenApps: [String]) {
         hiddenAppsIdentities = hiddenApps.map { AppIdentity(url: URL(fileURLWithPath: $0)) }
-    }
-
-    private func chooseAppsToHide() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.application]
-        panel.allowsMultipleSelection = true
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.prompt = "Hide"
-
-        guard panel.runModal() == .OK else { return }
-        for url in panel.urls {
-            settingsManager.hide(app: AppIdentity(url: url))
-        }
     }
 }
 
