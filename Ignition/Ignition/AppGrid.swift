@@ -155,6 +155,9 @@ struct AppGrid: View {
                 }
                 .padding(.top, 2)
                 .padding(.horizontal, gridPadding)
+                // Don't let the fixed-width columns hold the scroll view open, otherwise
+                // the measured width below can never shrink and columns never drop
+                .frame(minWidth: 0, maxWidth: .infinity)
             }
             // Fit as many fixed-width columns as the window allows
             .onGeometryChange(for: Int.self) { geometry in
