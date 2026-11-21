@@ -60,9 +60,14 @@ struct AppGrid: View {
                 focus = .search
             }
         }
-        // Start every activation with an empty search
+        // Start every activation with an empty search, ready to type into. The window
+        // restores its last focused element (e.g. a grid item) on activation, so the
+        // search field is focused on the next run loop pass to override that.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             viewModel.searchTerm = ""
+            DispatchQueue.main.async {
+                focus = .search
+            }
         }
         .onChange(of: settingsManager.hiddenApps) { _, newHiddenApps in
             viewModel.updateHiddenApps(newHiddenApps)

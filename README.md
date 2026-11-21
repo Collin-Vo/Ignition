@@ -19,7 +19,7 @@ Ignition is a fast, keyboard-first app launcher for macOS. It shows every instal
 - **Smart ranking.** Apps whose name *starts with* your search are listed first, then apps that only *contain* it.
 - **Inline autocomplete.** The rest of the top match's name appears as ghost text behind what you typed, and its icon appears next to the search field.
 - **Return to launch** the top match straight from the search field.
-- **Fresh start every time.** The search clears whenever Ignition becomes active again.
+- **Fresh start every time.** Whenever Ignition becomes active again, the search clears and the search field takes focus, so you can start typing immediately.
 
 ### Keyboard navigation
 - **↓** in the search field moves focus to the first app.
