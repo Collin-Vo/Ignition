@@ -46,6 +46,12 @@ struct AppGrid: View {
             Divider().padding(.horizontal)
             grid
         }
+        // Esc puts Ignition away, like the global shortcut. Handled here so it works whether
+        // the search field or a grid item has focus; the search is cleared on the next activation
+        .onKeyPress(.escape) {
+            NSApplication.shared.hide(nil)
+            return .handled
+        }
         .onAppear {
             viewModel.hiddenApps = settingsManager.hiddenApps
             viewModel.reloadApps()

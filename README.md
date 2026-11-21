@@ -32,6 +32,7 @@ Ignition is a fast, keyboard-first app launcher for macOS. It shows every instal
 - **Tab / Shift-Tab** step forward and backward through the apps.
 - **↑ from the top row** or **Shift-Tab from the first app** goes back to the search field.
 - **Return** launches the focused app.
+- **Esc** hides Ignition, from the search field or anywhere in the grid.
 - Ignition scrolls automatically to keep the focused app in view, and draws an accent-colored ring around its icon.
 
 ### Context menu
@@ -104,7 +105,7 @@ Output is written to `.build/release/`: the `.app`, `Ignition-<version>.zip`, `I
 | File                             | Purpose                                                      |
 | -------------------------------- | ------------------------------------------------------------ |
 | `IgnitionApp.swift`              | App entry point, window setup, auto-hide, Settings scene     |
-| `AppGrid.swift`                  | Search field, ghost-text autocomplete, grid, keyboard navigation, context menu |
+| `AppGrid.swift`                  | Search field, ghost-text autocomplete, grid, keyboard navigation (including Esc to hide), context menu |
 | `AppGridViewModel.swift`         | App locations, search ranking, hidden-app filtering, folder access requests |
 | `AppFolderWatcher.swift`         | FSEvents watcher that reloads the grid when apps are installed or removed |
 | `AppIdentity.swift`              | App model: name, URL and pre-rendered icons                  |
