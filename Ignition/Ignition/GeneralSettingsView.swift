@@ -5,10 +5,11 @@
 //  Created by Collin Voßwinkel on 20.10.26.
 //
 
+import KeyboardShortcuts
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The General settings tab: launch at login and the hidden apps
+/// The General settings tab: launch at login, the global shortcut and the hidden apps
 struct GeneralSettingsView: View {
 
     @Environment(SettingsManager.self) private var settingsManager
@@ -20,6 +21,7 @@ struct GeneralSettingsView: View {
                     get: { settingsManager.launchAtLogin },
                     set: { settingsManager.setLaunchAtLogin($0) }
                 ))
+                KeyboardShortcuts.Recorder("Show Ignition:", name: .toggleIgnition)
             }
             Section {
                 HiddenAppsList()

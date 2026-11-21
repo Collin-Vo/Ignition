@@ -21,6 +21,11 @@ Ignition is a fast, keyboard-first app launcher for macOS. It shows every instal
 - **Return to launch** the top match straight from the search field.
 - **Fresh start every time.** Whenever Ignition becomes active again, the search clears and the search field takes focus, so you can start typing immediately.
 
+### Global shortcut
+- **Summon Ignition from anywhere** with **⌥Space**. Press it again to put Ignition away.
+- **Change or clear it** in **Settings → General → Show Ignition**. The new shortcut works right away and is kept across launches.
+- Works in the App Sandbox and needs no Accessibility permission.
+
 ### Keyboard navigation
 - **↓** in the search field moves focus to the first app.
 - **← → ↑ ↓** move through the grid row by row. Moving down from a partly filled row jumps to the last app.
@@ -60,6 +65,8 @@ Open the project in Xcode and run the **Ignition** scheme:
 ```bash
 open Ignition/Ignition.xcodeproj
 ```
+
+On the first build, Xcode fetches the one dependency, [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts), using Swift Package Manager. The resolved version is pinned in `Package.resolved`.
 
 ## Releasing
 
@@ -104,5 +111,6 @@ Output is written to `.build/release/`: the `.app`, `Ignition-<version>.zip`, `I
 | `FileUtil.swift`                 | App discovery, sandbox access checks, security-scoped bookmarks |
 | `SettingsManager.swift`          | Hidden apps list and launch-at-login state                   |
 | `SettingsView.swift`             | Tabbed Settings window                                       |
-| `GeneralSettingsView.swift`      | Launch-at-login toggle and the Hidden Apps table             |
+| `GeneralSettingsView.swift`      | Launch-at-login toggle, shortcut recorder and the Hidden Apps table |
+| `GlobalShortcut.swift`           | System-wide show/hide shortcut (KeyboardShortcuts package)   |
 | `NSImageBakeExtension.swift`     | Pre-renders `NSImage` icons at fixed sizes                   |
