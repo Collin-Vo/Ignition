@@ -19,7 +19,12 @@ Ignition is a fast, keyboard-first app launcher for macOS. It shows every instal
 - **Smart ranking.** Apps whose name *starts with* your search are listed first, then apps that only *contain* it.
 - **Inline autocomplete.** The rest of the top match's name appears as ghost text behind what you typed, and its icon appears next to the search field.
 - **Return to launch** the top match straight from the search field.
-- **Fresh start every time.** The search clears whenever Ignition becomes active again.
+- **Fresh start every time.** Whenever Ignition becomes active again, the search clears and the search field takes focus, so you can start typing immediately.
+
+### Global shortcut
+- **Summon Ignition from anywhere** with **⌥Space**. Press it again to put Ignition away.
+- **Change or clear it** in **Settings → General → Show Ignition**. The new shortcut works right away and is kept across launches.
+- Works in the App Sandbox and needs no Accessibility permission.
 
 ### Keyboard navigation
 - **↓** in the search field moves focus to the first app.
@@ -27,6 +32,7 @@ Ignition is a fast, keyboard-first app launcher for macOS. It shows every instal
 - **Tab / Shift-Tab** step forward and backward through the apps.
 - **↑ from the top row** or **Shift-Tab from the first app** goes back to the search field.
 - **Return** launches the focused app.
+- **Esc** hides Ignition, from the search field or anywhere in the grid.
 - Ignition scrolls automatically to keep the focused app in view, and draws an accent-colored ring around its icon.
 
 ### Context menu
@@ -60,6 +66,8 @@ Open the project in Xcode and run the **Ignition** scheme:
 ```bash
 open Ignition/Ignition.xcodeproj
 ```
+
+On the first build, Xcode fetches the one dependency, [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts), using Swift Package Manager. The resolved version is pinned in `Package.resolved`.
 
 ## Releasing
 
@@ -97,12 +105,13 @@ Output is written to `.build/release/`: the `.app`, `Ignition-<version>.zip`, `I
 | File                             | Purpose                                                      |
 | -------------------------------- | ------------------------------------------------------------ |
 | `IgnitionApp.swift`              | App entry point, window setup, auto-hide, Settings scene     |
-| `AppGrid.swift`                  | Search field, ghost-text autocomplete, grid, keyboard navigation, context menu |
+| `AppGrid.swift`                  | Search field, ghost-text autocomplete, grid, keyboard navigation (including Esc to hide), context menu |
 | `AppGridViewModel.swift`         | App locations, search ranking, hidden-app filtering, folder access requests |
 | `AppFolderWatcher.swift`         | FSEvents watcher that reloads the grid when apps are installed or removed |
 | `AppIdentity.swift`              | App model: name, URL and pre-rendered icons                  |
 | `FileUtil.swift`                 | App discovery, sandbox access checks, security-scoped bookmarks |
 | `SettingsManager.swift`          | Hidden apps list and launch-at-login state                   |
 | `SettingsView.swift`             | Tabbed Settings window                                       |
-| `GeneralSettingsView.swift`      | Launch-at-login toggle and the Hidden Apps table             |
+| `GeneralSettingsView.swift`      | Launch-at-login toggle, shortcut recorder and the Hidden Apps table |
+| `GlobalShortcut.swift`           | System-wide show/hide shortcut (KeyboardShortcuts package)   |
 | `NSImageBakeExtension.swift`     | Pre-renders `NSImage` icons at fixed sizes                   |

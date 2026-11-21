@@ -22,6 +22,7 @@ struct IgnitionApp: App {
         ) { _ in
             NSApplication.shared.hide(nil)
         }
+        GlobalShortcut.register()
     }
 
     var body: some Scene {
