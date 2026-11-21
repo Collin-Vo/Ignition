@@ -81,8 +81,10 @@ INSTALLER_IDENTITY=$(find_identity "Developer ID Installer")
 [[ -n $INSTALLER_IDENTITY ]] || fail "No 'Developer ID Installer' certificate for team $TEAM_ID in the keychain."
 print "App:       $APP_IDENTITY"
 print "Installer: $INSTALLER_IDENTITY"
-xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" > /dev/null 2>&1 \
-  || fail "Notary profile '$NOTARY_PROFILE' not found or invalid. See setup notes at the top of this script."
+if ! notary_check=$(xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" 2>&1); then
+  print -u2 -- "$notary_check"
+  fail "Notary check for profile '$NOTARY_PROFILE' failed (notarytool output above). See setup notes at the top of this script."
+fi
 
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR" "$WORK_DIR"
